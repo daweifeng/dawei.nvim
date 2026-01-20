@@ -717,6 +717,8 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'eslint_d',
+        'prettier',
       })
       ensure_installed = vim.tbl_filter(function(tool)
         return tool ~= 'tsgo'
@@ -766,7 +768,7 @@ require('lazy').setup({
           return nil
         else
           return {
-            timeout_ms = 500,
+            timeout_ms = 2000,
             lsp_format = 'fallback',
           }
         end
@@ -777,10 +779,15 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'prettier' },
-        typescript = { 'prettier' },
-        javascriptreact = { 'prettier' },
-        typescriptreact = { 'prettier' },
+        javascript = { 'eslint_d', 'prettier' },
+        javascriptreact = { 'eslint_d', 'prettier' },
+        typescript = { 'eslint_d', 'prettier' },
+        typescriptreact = { 'eslint_d', 'prettier' },
+        json = { 'prettier' },
+        jsonc = { 'prettier' },
+        graphql = { 'prettier' },
+        css = { 'prettier' },
+        postcss = { 'prettier' },
       },
     },
   },
