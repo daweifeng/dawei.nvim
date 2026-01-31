@@ -683,7 +683,7 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         tsgo = {},
-        --
+        eslint = {}, -- ESLint LSP for diagnostics
 
         lua_ls = {
           -- cmd = { ... },
@@ -717,12 +717,8 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        'eslint_d',
         'prettier',
       })
-      ensure_installed = vim.tbl_filter(function(tool)
-        return tool ~= 'tsgo'
-      end, ensure_installed)
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
@@ -740,6 +736,12 @@ require('lazy').setup({
           end,
         },
       }
+
+      -- Enable tsgo using the new vim.lsp API (Neovim 0.11+)
+      vim.lsp.config('tsgo', {
+        capabilities = capabilities,
+      })
+      vim.lsp.enable('tsgo')
     end,
   },
 
@@ -778,11 +780,11 @@ require('lazy').setup({
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'eslint_d', 'prettier' },
-        javascriptreact = { 'eslint_d', 'prettier' },
-        typescript = { 'eslint_d', 'prettier' },
-        typescriptreact = { 'eslint_d', 'prettier' },
+        -- Using prettier only since eslint-config-prettier disables ESLint formatting rules
+        javascript = { 'prettier' },
+        javascriptreact = { 'prettier' },
+        typescript = { 'prettier' },
+        typescriptreact = { 'prettier' },
         json = { 'prettier' },
         jsonc = { 'prettier' },
         graphql = { 'prettier' },
@@ -945,22 +947,14 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    lazy = false,
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-    opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      -- Autoinstall languages that are not installed
-      auto_install = true,
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
+    config = function()
+      require('nvim-treesitter').setup()
+      -- Install parsers
+      require('nvim-treesitter').install({ 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typescript', 'javascript' })
+    end,
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
