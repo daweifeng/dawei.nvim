@@ -271,6 +271,45 @@ require('lazy').setup({
   -- options to `gitsigns.nvim`.
   --
   -- See `:help gitsigns` to understand what the configuration keys do
+
+  { -- Session management - automatically save and restore sessions
+    'folke/persistence.nvim',
+    event = 'BufReadPre',
+    opts = {
+      need = 1, -- Minimum number of file buffers that need to be open to save
+      branch = true, -- Use git branch in session files (separate sessions per branch)
+    },
+    config = function(_, opts)
+      require('persistence').setup(opts)
+      -- Close neo-tree before saving session to avoid conflicts
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'PersistenceSavePre',
+        callback = function()
+          -- Close neo-tree if it's open
+          if package.loaded['neo-tree.command'] then
+            vim.cmd 'Neotree close'
+          end
+        end,
+      })
+    end,
+    keys = {
+      { '<leader>qs', function() require('persistence').load() end, desc = '[Q]uit and load [S]ession' },
+      { '<leader>ql', function() require('persistence').load({ last = true }) end, desc = '[Q]uit and load [L]ast session' },
+      { '<leader>qd', function() require('persistence').stop() end, desc = '[Q]uit [D]on\'t save session' },
+    },
+    init = function()
+      -- Auto-restore session when starting nvim without arguments
+      vim.api.nvim_create_autocmd('VimEnter', {
+        nested = true,
+        callback = function()
+          if vim.fn.argc() == 0 then
+            require('persistence').load()
+          end
+        end,
+      })
+    end,
+  },
+
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -280,6 +319,117 @@ require('lazy').setup({
         delete = { text = '_' },
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
+      },
+    },
+  },
+
+  { -- Lazygit integration - beautiful terminal UI for git
+    'kdheepak/lazygit.nvim',
+    cmd = {
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
+    },
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    keys = {
+      { '<leader>gg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
+    },
+  },
+
+  { -- Terminal integration - toggle floating/horizontal/vertical terminals
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    opts = {
+      size = function(term)
+        if term.direction == 'horizontal' then
+          return 15
+        elseif term.direction == 'vertical' then
+          return vim.o.columns * 0.4
+        end
+      end,
+      open_mapping = [[<c-\>]],
+      hide_numbers = true,
+      shade_terminals = true,
+      start_in_insert = true,
+      insert_mappings = true,
+      terminal_mappings = true,
+      persist_size = true,
+      direction = 'float',
+      close_on_exit = true,
+      shell = vim.o.shell,
+      float_opts = {
+        border = 'curved',
+        winblend = 0,
+      },
+    },
+    keys = {
+      { '<C-\\>', mode = { 'n', 'i', 't' } }, -- Main toggle key that loads the plugin
+      { '<leader>tf', '<cmd>ToggleTerm direction=float<cr>', desc = '[T]oggle [F]loating terminal' },
+      { '<leader>th', '<cmd>ToggleTerm direction=horizontal<cr>', desc = '[T]oggle [H]orizontal terminal' },
+      { '<leader>tv', '<cmd>ToggleTerm direction=vertical<cr>', desc = '[T]oggle [V]ertical terminal' },
+    },
+  },
+
+  { -- Better diagnostics list and quickfix
+    'folke/trouble.nvim',
+    dependencies = { 'nvim-web-devicons' },
+    opts = {},
+    cmd = 'Trouble',
+    keys = {
+      { '<leader>xx', '<cmd>Trouble diagnostics toggle<cr>', desc = 'Diagnostics (Trouble)' },
+      { '<leader>xX', '<cmd>Trouble diagnostics toggle filter.buf=0<cr>', desc = 'Buffer Diagnostics (Trouble)' },
+      { '<leader>cs', '<cmd>Trouble symbols toggle focus=false<cr>', desc = 'Symbols (Trouble)' },
+      { '<leader>cl', '<cmd>Trouble lsp toggle focus=false win.position=right<cr>', desc = 'LSP Definitions / references / ... (Trouble)' },
+      { '<leader>xL', '<cmd>Trouble loclist toggle<cr>', desc = 'Location List (Trouble)' },
+      { '<leader>xQ', '<cmd>Trouble qflist toggle<cr>', desc = 'Quickfix List (Trouble)' },
+    },
+  },
+
+  { -- Quick file navigation - mark and jump to important files
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local harpoon = require 'harpoon'
+      harpoon:setup()
+
+      vim.keymap.set('n', '<leader>a', function()
+        harpoon:list():add()
+      end, { desc = 'Harpoon: [A]dd file' })
+      vim.keymap.set('n', '<C-e>', function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+      end, { desc = 'Harpoon: Toggle menu' })
+
+      vim.keymap.set('n', '<leader>1', function()
+        harpoon:list():select(1)
+      end, { desc = 'Harpoon: Go to file 1' })
+      vim.keymap.set('n', '<leader>2', function()
+        harpoon:list():select(2)
+      end, { desc = 'Harpoon: Go to file 2' })
+      vim.keymap.set('n', '<leader>3', function()
+        harpoon:list():select(3)
+      end, { desc = 'Harpoon: Go to file 3' })
+      vim.keymap.set('n', '<leader>4', function()
+        harpoon:list():select(4)
+      end, { desc = 'Harpoon: Go to file 4' })
+    end,
+  },
+
+  { -- Visual indent guides
+    'lukas-reineke/indent-blankline.nvim',
+    main = 'ibl',
+    opts = {
+      indent = {
+        char = '│',
+      },
+      scope = {
+        enabled = true,
+        show_start = false,
+        show_end = false,
       },
     },
   },
@@ -682,7 +832,9 @@ require('lazy').setup({
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
-        tsgo = {},
+        tsgo = {
+          cmd = { vim.fn.stdpath('data') .. '/mason/bin/tsgo', '--lsp', '--stdio' },
+        },
         eslint = {}, -- ESLint LSP for diagnostics
 
         lua_ls = {
@@ -736,12 +888,6 @@ require('lazy').setup({
           end,
         },
       }
-
-      -- Enable tsgo using the new vim.lsp API (Neovim 0.11+)
-      vim.lsp.config('tsgo', {
-        capabilities = capabilities,
-      })
-      vim.lsp.enable('tsgo')
     end,
   },
 
@@ -947,6 +1093,7 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main',
     lazy = false,
     build = ':TSUpdate',
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
@@ -977,7 +1124,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
