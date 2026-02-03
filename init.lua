@@ -199,6 +199,12 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Resize splits with Alt+hjkl
+vim.keymap.set('n', '<M-k>', '<cmd>resize +2<CR>', { desc = 'Increase window height' })
+vim.keymap.set('n', '<M-j>', '<cmd>resize -2<CR>', { desc = 'Decrease window height' })
+vim.keymap.set('n', '<M-h>', '<cmd>vertical resize -2<CR>', { desc = 'Decrease window width' })
+vim.keymap.set('n', '<M-l>', '<cmd>vertical resize +2<CR>', { desc = 'Increase window width' })
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -216,6 +222,15 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.hl.on_yank()
+  end,
+})
+
+-- Automatically resize splits when the window is resized
+vim.api.nvim_create_autocmd('VimResized', {
+  desc = 'Equalize window sizes when the terminal is resized',
+  group = vim.api.nvim_create_augroup('kickstart-resize-splits', { clear = true }),
+  callback = function()
+    vim.cmd 'wincmd ='
   end,
 })
 

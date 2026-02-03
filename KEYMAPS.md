@@ -40,6 +40,17 @@
 | `<C-k>` | Normal | Move to upper window |
 | `<C-l>` | Normal | Move to right window |
 
+### Resize Windows
+
+| Key | Mode | Description |
+|-----|------|-------------|
+| `<M-h>` (Alt+h) | Normal | Decrease window width |
+| `<M-l>` (Alt+l) | Normal | Increase window width |
+| `<M-j>` (Alt+j) | Normal | Decrease window height |
+| `<M-k>` (Alt+k) | Normal | Increase window height |
+
+> **Note:** Windows auto-equalize when the terminal is resized.
+
 ### Telescope Actions (Within Picker)
 | Key | Description |
 |-----|-------------|
